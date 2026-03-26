@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CT Image Reconstruction — Nick Kyriakides-Crowe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1814;
+    --ink-light: #6b6760;
+    --ink-faint: #c2bfb8;
+    --paper: #f7f5f0;
+    --paper-warm: #efece4;
+    --paper-code: #1e1c18;
+    --accent: #2a4a7f;
+    --accent-faint: rgba(42,74,127,0.07);
+    --accent-mid: rgba(42,74,127,0.15);
+    --rule: rgba(26,24,20,0.12);
+    --rule-strong: rgba(26,24,20,0.22);
+
+    /* syntax colors — warm dark theme */
+    --syn-base: #d4cfc5;
+    --syn-comment: #6e6a5e;
+    --syn-keyword: #c4956a;
+    --syn-string: #89a86a;
+    --syn-number: #8fb0d4;
+    --syn-function: #b8a0d4;
+    --syn-section: #e8c070;
+    --syn-variable: #d4cfc5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── nav ── */
+  .topnav {
+    padding: 1.5rem 0;
+    border-bottom: 0.5px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .topnav a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    text-decoration: none;
+    border-bottom: 0.5px solid var(--ink-faint);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .topnav a:hover { color: var(--accent); border-color: var(--accent); }
+  .topnav-right { display: flex; gap: 1.5rem; }
+
+  /* ── header ── */
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 0.5px solid var(--rule);
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.05s;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .status-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 400;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #2a5a2a;
+    background: #e8f5e8;
+    border: 0.5px solid rgba(42,90,42,0.25);
+    border-radius: 2px;
+    padding: 2px 8px;
+  }
+
+  .status-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 300;
+    color: var(--ink-faint);
+  }
+
+  h1 {
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+
+  h1 em { font-style: italic; color: var(--accent); }
+
+  .header-summary {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--ink-light);
+    max-width: 600px;
+    margin-bottom: 1.75rem;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 300;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .meta-value { font-size: 0.9rem; color: var(--ink-light); }
+
+  /* ── sections ── */
+  section {
+    padding: 3rem 0;
+    border-bottom: 0.5px solid var(--rule);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 1.75rem;
+  }
+
+  /* ── prose ── */
+  .prose { font-size: 1.05rem; line-height: 1.85; color: var(--ink); }
+  .prose p + p { margin-top: 1rem; }
+  .prose em { font-style: italic; }
+  .prose strong { font-weight: 500; }
+
+  /* ── callout ── */
+  .callout {
+    background: var(--accent-faint);
+    border: 0.5px solid var(--accent-mid);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.75rem 0;
+  }
+
+  .callout-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+  }
+
+  .callout p { font-size: 0.98rem; line-height: 1.75; color: var(--ink-light); }
+  .callout p em { color: var(--ink); font-style: italic; }
+
+  /* ── pipeline steps ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    counter-reset: step;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 1rem;
+    padding: 1.4rem 0;
+    border-top: 0.5px solid var(--rule);
+    counter-increment: step;
+  }
+
+  .step:first-child { border-top: none; }
+
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 300;
+    color: var(--ink-faint);
+    padding-top: 3px;
+  }
+
+  .step-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+
+  .step-desc {
+    font-size: 0.93rem;
+    color: var(--ink-light);
+    line-height: 1.65;
+  }
+
+  /* ── code block ── */
+  .code-wrap {
+    margin: 2rem 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 0.5px solid rgba(255,255,255,0.06);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+
+  .code-header {
+    background: #2a2720;
+    padding: 0.65rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  }
+
+  .code-filename {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: #7a7570;
+    letter-spacing: 0.04em;
+  }
+
+  .code-lang {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 300;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #5a5550;
+  }
+
+  .code-body {
+    background: var(--paper-code);
+    padding: 1.4rem 1.4rem 1.4rem 0;
+    overflow-x: auto;
+  }
+
+  pre {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--syn-base);
+    margin: 0;
+    counter-reset: line;
+  }
+
+  .line {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+  }
+
+  .ln {
+    text-align: right;
+    padding-right: 1.2rem;
+    color: #3a3830;
+    font-size: 0.72rem;
+    user-select: none;
+    padding-top: 0;
+  }
+
+  .lc { white-space: pre; }
+
+  /* syntax token classes */
+  .k  { color: var(--syn-keyword); }   /* keywords: for, end, if, etc */
+  .s  { color: var(--syn-section); }   /* section headers %% */
+  .cm { color: var(--syn-comment); font-style: italic; }  /* comments */
+  .fn { color: var(--syn-function); }  /* function calls */
+  .st { color: var(--syn-string); }    /* strings */
+  .nm { color: var(--syn-number); }    /* numbers */
+
+  /* ── figure slots ── */
+  .figure-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.75rem 0;
+  }
+
+  .figure-grid.wide { grid-template-columns: 1fr; }
+
+  .fig-slot {
+    border: 0.5px dashed var(--rule-strong);
+    border-radius: 4px;
+    background: var(--paper-warm);
+    overflow: hidden;
+  }
+
+  /* when an actual image is present */
+  .fig-slot img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* placeholder state — hidden once img loads */
+  .fig-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    padding: 1.5rem;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .fig-slot img ~ .fig-placeholder { display: none; }
+
+  .fig-icon {
+    width: 28px;
+    height: 28px;
+    opacity: 0.2;
+  }
+
+  .fig-placeholder-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+
+  .fig-caption {
+    padding: 0.6rem 0.9rem;
+    border-top: 0.5px solid var(--rule);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+  }
+
+  /* ── stack ── */
+  .stack-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .stack-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    font-size: 0.93rem;
+    line-height: 1.5;
+  }
+
+  .stack-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    min-width: 100px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .stack-val { color: var(--ink-light); }
+
+  /* ── footer ── */
+  footer { padding: 2.5rem 0 4rem; animation: fadeUp 0.6s ease both; }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+  }
+
+  .footer-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--ink-light);
+    text-decoration: none;
+    border-bottom: 0.5px solid var(--ink-faint);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .footer-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── animation ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .topnav  { animation-delay: 0s; }
+  header   { animation-delay: 0.06s; }
+  section:nth-of-type(1) { animation-delay: 0.12s; }
+  section:nth-of-type(2) { animation-delay: 0.18s; }
+  section:nth-of-type(3) { animation-delay: 0.22s; }
+  section:nth-of-type(4) { animation-delay: 0.26s; }
+  footer   { animation-delay: 0.30s; }
+
+  @media (max-width: 520px) {
+    .figure-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="topnav">
+    <a href="https://nkcrowe.github.io">← Nick Kyriakides-Crowe</a>
+    <div class="topnav-right">
+      <a href="https://github.com/nkcrowe/CT-reconstruction" target="_blank">GitHub ↗</a>
+    </div>
+  </nav>
+
+  <header>
+    <div class="status-row">
+      <span class="status-badge">Complete</span>
+      <span class="status-date">Oct 2024 — Dec 2024</span>
+    </div>
+    <h1>CT Image Reconstruction<br><em>from DICOM Data</em></h1>
+    <p class="header-summary">MATLAB implementation of the Radon transform and Fourier Slice Theorem to reconstruct a 2D image from 23,000+ sinogram data points — a numerical inverse problem requiring multi-step Fourier analysis and interpolation.</p>
+    <div class="header-meta">
+      <div class="meta-item">
+        <span class="meta-label">Language</span>
+        <span class="meta-value">MATLAB</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Data</span>
+        <span class="meta-value">DICOM medical image (128×128)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Context</span>
+        <span class="meta-value">Independent · USC Biomedical Engineering</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- OVERVIEW -->
+  <section>
+    <div class="section-label">Overview</div>
+    <div class="prose">
+      <p>CT scanners do not directly capture a 2D image. They measure a set of 1D line-integral projections of the object at different angles — the <em>sinogram</em>. Recovering the original image from these projections is the core inverse problem of tomography, solved here via the <strong>Fourier Slice Theorem</strong>: each 1D projection corresponds to a radial slice through the 2D Fourier transform of the image.</p>
+      <p>The pipeline takes a DICOM medical image, constructs the sinogram by rotating and projecting the image at 180 angles, assembles the full 2D Fourier transform from the 1D projection slices via polar-to-Cartesian interpolation, then inverts it to recover the reconstruction.</p>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Connection to volatility calibration</div>
+      <p>Both this problem and volatility surface calibration are <em>ill-posed inverse problems</em> in Hadamard's sense. In CT, the ramp filter required for filtered back-projection amplifies high-frequency noise — exactly as numerical differentiation of ∂²C/∂K² amplifies noise in Dupire's formula. Both require regularization to be stable. This structural analogy is the central narrative of the stochastic vol project.</p>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section>
+    <div class="section-label">Pipeline</div>
+    <div class="pipeline">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">Load & crop DICOM image</div>
+          <div class="step-desc">Read the raw DICOM file and crop a 128×128 region of interest. This reduces computation while preserving the key structure to reconstruct.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Construct the sinogram</div>
+          <div class="step-desc">Rotate the image at each of 180 integer angles (0°–179°) and sum along columns to produce 1D projections. Stacking these gives the sinogram — a (180 × 128) matrix where each row is one angular projection.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">1D FFT of each projection</div>
+          <div class="step-desc">Apply the 1D FFT to each projection. By the Fourier Slice Theorem, the result is a radial slice through the 2D Fourier transform of the original image at the corresponding angle.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Assemble 2D Fourier transform via interpolation</div>
+          <div class="step-desc">The 1D FFT slices are in polar coordinates (angle, frequency). Convert to Cartesian (x, y) using <code>pol2cart</code>, then interpolate onto a regular grid using <code>griddata</code> to assemble the full 2D Fourier transform.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">Validate against direct 2D FFT</div>
+          <div class="step-desc">Compare the assembled Fourier transform against a direct <code>fft2</code> of the original image. Agreement in log-magnitude confirms the Fourier Slice Theorem is being applied correctly.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Inverse FFT → reconstructed image</div>
+          <div class="step-desc">Apply <code>ifft2</code> to the assembled transform and take the absolute value. The output is the reconstructed image — recovered purely from the 1D projections without any direct image data.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section>
+    <div class="section-label">Results</div>
+    <div class="prose">
+      <p>Each stage of the pipeline produces a visualization, from the original DICOM image through the sinogram, the assembled Fourier transform, and the final reconstruction. Replace the placeholder slots below with the exported figures from your MATLAB run.</p>
+    </div>
+
+    <div class="figure-grid">
+      <div class="fig-slot">
+        <img src="figures/original_dicom.png" alt="Original DICOM image">
+        <div class="fig-placeholder">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Original DICOM image</span>
+        </div>
+        <div class="fig-caption">Fig. 1 — Original DICOM image</div>
+      </div>
+
+      <div class="fig-slot">
+        <img src="figures/cropped.png" alt="Cropped 128x128 section">
+        <div class="fig-placeholder">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Cropped 128×128 region</span>
+        </div>
+        <div class="fig-caption">Fig. 2 — Cropped 128×128 region of interest</div>
+      </div>
+    </div>
+
+    <div class="figure-grid wide">
+      <div class="fig-slot">
+        <img src="figures/sinogram.png" alt="Sinogram — 180 projections">
+        <div class="fig-placeholder" style="min-height: 120px;">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Sinogram (180 projections)</span>
+        </div>
+        <div class="fig-caption">Fig. 3 — Sinogram: 180 1D projections stacked by angle. Each row is the column-sum of the image rotated to that angle.</div>
+      </div>
+    </div>
+
+    <div class="figure-grid">
+      <div class="fig-slot">
+        <img src="figures/fft_assembled.png" alt="Assembled 2D Fourier transform">
+        <div class="fig-placeholder">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Assembled 2D FFT</span>
+        </div>
+        <div class="fig-caption">Fig. 4 — Assembled 2D Fourier transform (log magnitude) from polar interpolation of projection slices</div>
+      </div>
+
+      <div class="fig-slot">
+        <img src="figures/fft_direct.png" alt="Direct 2D FFT for validation">
+        <div class="fig-placeholder">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Direct 2D FFT (validation)</span>
+        </div>
+        <div class="fig-caption">Fig. 5 — Direct fft2 of the original image; agreement with Fig. 4 validates the Fourier Slice Theorem</div>
+      </div>
+    </div>
+
+    <div class="figure-grid wide">
+      <div class="fig-slot">
+        <!<img src="figures/reconstruction.png" alt="Final reconstructed image">
+        <div class="fig-placeholder" style="min-height: 200px;">
+          <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span class="fig-placeholder-label">Final reconstructed image</span>
+        </div>
+        <div class="fig-caption">Fig. 6 — Reconstructed image from inverse 2D FFT of the assembled Fourier transform. Recovered entirely from 1D projections.</div>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top:0.5rem;">
+      <p style="font-size:0.88rem; color: var(--ink-faint); font-family: 'DM Mono', monospace; font-weight:300;">
+        To add figures: save each MATLAB plot with <code>exportgraphics(gcf, 'figures/name.png', 'Resolution', 150)</code>, place PNGs in a <code>figures/</code> folder in the repo root, then uncomment the <code>&lt;img&gt;</code> tags above.
+      </p>
+    </div>
+  </section>
+
+  <!-- CODE -->
+  <section>
+    <div class="section-label">Code — analysis.m</div>
+    <div class="prose" style="margin-bottom: 1.5rem;">
+      <p>The full pipeline in a single MATLAB script. Section markers (‍<code>%%</code>) correspond directly to the pipeline stages above.</p>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">analysis.m</span>
+        <span class="code-lang">MATLAB</span>
+      </div>
+      <div class="code-body">
+<pre>
+<div class="line"><span class="ln">1</span><span class="lc"><span class="fn">clear</span>, <span class="fn">clc</span>, <span class="fn">close</span> <span class="k">all</span></span></div>
+<div class="line"><span class="ln">2</span><span class="lc"></span></div>
+<div class="line"><span class="ln">3</span><span class="lc"><span class="s">%% Part 1</span></span></div>
+<div class="line"><span class="ln">4</span><span class="lc"></span></div>
+<div class="line"><span class="ln">5</span><span class="lc">dicomImage = <span class="fn">dicomread</span>(<span class="st">"image10.dcm"</span>);</span></div>
+<div class="line"><span class="ln">6</span><span class="lc"></span></div>
+<div class="line"><span class="ln">7</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">8</span><span class="lc"><span class="fn">imshow</span>(dicomImage, [])</span></div>
+<div class="line"><span class="ln">9</span><span class="lc"><span class="fn">title</span>(<span class="st">'Original DICOM Image'</span>)</span></div>
+<div class="line"><span class="ln">10</span><span class="lc"></span></div>
+<div class="line"><span class="ln">11</span><span class="lc">croppedImage = <span class="fn">imcrop</span>(dicomImage,[<span class="nm">175</span> <span class="nm">125</span> <span class="nm">127</span> <span class="nm">127</span>]); <span class="cm">% Crop 128x128 section</span></span></div>
+<div class="line"><span class="ln">12</span><span class="lc"></span></div>
+<div class="line"><span class="ln">13</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">14</span><span class="lc"><span class="fn">imshow</span>(croppedImage, [])</span></div>
+<div class="line"><span class="ln">15</span><span class="lc"><span class="fn">title</span>(<span class="st">'Cropped 128x128 Section'</span>)</span></div>
+<div class="line"><span class="ln">16</span><span class="lc"></span></div>
+<div class="line"><span class="ln">17</span><span class="lc"><span class="s">%% Part 2</span></span></div>
+<div class="line"><span class="ln">18</span><span class="lc"></span></div>
+<div class="line"><span class="ln">19</span><span class="lc">numAngles = <span class="nm">180</span>;</span></div>
+<div class="line"><span class="ln">20</span><span class="lc">projections = <span class="fn">zeros</span>(numAngles, <span class="fn">size</span>(croppedImage, <span class="nm">1</span>));</span></div>
+<div class="line"><span class="ln">21</span><span class="lc"></span></div>
+<div class="line"><span class="ln">22</span><span class="lc"><span class="k">for</span> angle = <span class="nm">1</span>:<span class="nm">180</span></span></div>
+<div class="line"><span class="ln">23</span><span class="lc">  rotatedImage = <span class="fn">imrotate</span>(croppedImage, angle, <span class="st">'bilinear'</span>, <span class="st">'crop'</span>);</span></div>
+<div class="line"><span class="ln">24</span><span class="lc">  projections(angle, :) = <span class="fn">sum</span>(rotatedImage, <span class="nm">1</span>);</span></div>
+<div class="line"><span class="ln">25</span><span class="lc"><span class="k">end</span></span></div>
+<div class="line"><span class="ln">26</span><span class="lc"></span></div>
+<div class="line"><span class="ln">27</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">28</span><span class="lc"><span class="fn">imagesc</span>(projections)</span></div>
+<div class="line"><span class="ln">29</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
+<div class="line"><span class="ln">30</span><span class="lc"><span class="fn">xlabel</span>(<span class="st">'Detector Pixels'</span>)</span></div>
+<div class="line"><span class="ln">31</span><span class="lc"><span class="fn">ylabel</span>(<span class="st">'Projection Angle (degrees)'</span>)</span></div>
+<div class="line"><span class="ln">32</span><span class="lc"><span class="fn">title</span>(<span class="st">'180 1D Projections (Sinogram)'</span>)</span></div>
+<div class="line"><span class="ln">33</span><span class="lc"></span></div>
+<div class="line"><span class="ln">34</span><span class="lc"><span class="s">%% Part 3</span></span></div>
+<div class="line"><span class="ln">35</span><span class="lc"></span></div>
+<div class="line"><span class="ln">36</span><span class="lc">pad = <span class="fn">padarray</span>(croppedImage,[<span class="nm">50</span> <span class="nm">50</span>],<span class="st">'both'</span>);</span></div>
+<div class="line"><span class="ln">37</span><span class="lc"></span></div>
+<div class="line"><span class="ln">38</span><span class="lc"><span class="k">for</span> i = <span class="nm">1</span>:<span class="nm">180</span></span></div>
+<div class="line"><span class="ln">39</span><span class="lc">  rotate = <span class="fn">imrotate</span>(pad,(i-<span class="nm">1</span>),<span class="st">'bilinear'</span>,<span class="st">'crop'</span>);</span></div>
+<div class="line"><span class="ln">40</span><span class="lc">  sinogram(:,i) = <span class="fn">sum</span>(rotate);</span></div>
+<div class="line"><span class="ln">41</span><span class="lc"><span class="k">end</span></span></div>
+<div class="line"><span class="ln">42</span><span class="lc"></span></div>
+<div class="line"><span class="ln">43</span><span class="lc">dfft = <span class="fn">fftshift</span>(<span class="fn">fft</span>(<span class="fn">fftshift</span>(sinogram)));</span></div>
+<div class="line"><span class="ln">44</span><span class="lc"></span></div>
+<div class="line"><span class="ln">45</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">46</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(dfft)),[])</span></div>
+<div class="line"><span class="ln">47</span><span class="lc"></span></div>
+<div class="line"><span class="ln">48</span><span class="lc"><span class="s">%% Part 4 and 5</span></span></div>
+<div class="line"><span class="ln">49</span><span class="lc"></span></div>
+<div class="line"><span class="ln">50</span><span class="lc">theta = <span class="fn">repmat</span>((<span class="nm">0</span>:<span class="nm">1</span>:(<span class="nm">180</span>-<span class="nm">1</span>))*pi/<span class="nm">180</span>, <span class="fn">length</span>(dfft), <span class="nm">1</span>);</span></div>
+<div class="line"><span class="ln">51</span><span class="lc">bound = (<span class="fn">length</span>(dfft)-<span class="nm">1</span>)/<span class="nm">2</span>;</span></div>
+<div class="line"><span class="ln">52</span><span class="lc">rho   = <span class="fn">repmat</span>((-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound))', <span class="nm">1</span>, <span class="nm">180</span>);</span></div>
+<div class="line"><span class="ln">53</span><span class="lc"></span></div>
+<div class="line"><span class="ln">54</span><span class="lc">[x, y] = <span class="fn">pol2cart</span>(theta, rho);</span></div>
+<div class="line"><span class="ln">55</span><span class="lc">[XI, YI] = <span class="fn">meshgrid</span>(-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound));</span></div>
+<div class="line"><span class="ln">56</span><span class="lc"></span></div>
+<div class="line"><span class="ln">57</span><span class="lc">assembled_dfft = <span class="fn">griddata</span>(x, y, dfft, XI, YI, <span class="st">'linear'</span>);</span></div>
+<div class="line"><span class="ln">58</span><span class="lc">assembled_dfft(<span class="fn">isnan</span>(assembled_dfft)) = <span class="nm">0</span>;</span></div>
+<div class="line"><span class="ln">59</span><span class="lc"></span></div>
+<div class="line"><span class="ln">60</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">61</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(assembled_dfft)),[])</span></div>
+<div class="line"><span class="ln">62</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
+<div class="line"><span class="ln">63</span><span class="lc"><span class="fn">title</span>(<span class="st">'Interpolated 2D Fourier Transform'</span>)</span></div>
+<div class="line"><span class="ln">64</span><span class="lc"></span></div>
+<div class="line"><span class="ln">65</span><span class="lc"><span class="s">%% Part 6</span></span></div>
+<div class="line"><span class="ln">66</span><span class="lc"></span></div>
+<div class="line"><span class="ln">67</span><span class="lc">direct = <span class="fn">fft2</span>(croppedImage);</span></div>
+<div class="line"><span class="ln">68</span><span class="lc"></span></div>
+<div class="line"><span class="ln">69</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">70</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(<span class="fn">fftshift</span>(direct))),[])</span></div>
+<div class="line"><span class="ln">71</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
+<div class="line"><span class="ln">72</span><span class="lc"><span class="fn">title</span>(<span class="st">'2D Fourier Transform (Magnitude)'</span>)</span></div>
+<div class="line"><span class="ln">73</span><span class="lc"></span></div>
+<div class="line"><span class="ln">74</span><span class="lc"><span class="s">%% Part 8</span></span></div>
+<div class="line"><span class="ln">75</span><span class="lc"></span></div>
+<div class="line"><span class="ln">76</span><span class="lc">inverseImage = <span class="fn">abs</span>(<span class="fn">fftshift</span>(<span class="fn">ifft2</span>(<span class="fn">fftshift</span>(assembled_dfft))))' ;</span></div>
+<div class="line"><span class="ln">77</span><span class="lc"></span></div>
+<div class="line"><span class="ln">78</span><span class="lc"><span class="fn">figure</span></span></div>
+<div class="line"><span class="ln">79</span><span class="lc"><span class="fn">imagesc</span>(inverseImage)</span></div>
+<div class="line"><span class="ln">80</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
+<div class="line"><span class="ln">81</span><span class="lc"><span class="fn">title</span>(<span class="st">'Reconstructed Image from Inverse 2D Fourier Transform'</span>)</span></div>
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- STACK -->
+  <section>
+    <div class="section-label">Stack & Context</div>
+    <div class="stack-list">
+      <div class="stack-row">
+        <span class="stack-key">Language</span>
+        <span class="stack-val">MATLAB R2024a</span>
+      </div>
+      <div class="stack-row">
+        <span class="stack-key">Toolboxes</span>
+        <span class="stack-val">Image Processing Toolbox (dicomread, imrotate, imcrop, imagesc)</span>
+      </div>
+      <div class="stack-row">
+        <span class="stack-key">Data</span>
+        <span class="stack-val">Single DICOM file; 128×128 crop; 180 projection angles; ~23,000 data points</span>
+      </div>
+      <div class="stack-row">
+        <span class="stack-key">Key functions</span>
+        <span class="stack-val">fft / fftshift / ifft2, pol2cart, griddata, padarray</span>
+      </div>
+      <div class="stack-row">
+        <span class="stack-key">Theory</span>
+        <span class="stack-val">Fourier Slice Theorem, Radon transform, polar-to-Cartesian interpolation</span>
+      </div>
+      <div class="stack-row">
+        <span class="stack-key">Course</span>
+        <span class="stack-val">USC BME — Independent project, Fall 2024</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-note">Nick Kyriakides-Crowe · USC Biomedical Engineering / Applied Mathematics</span>
+      <a class="footer-link" href="https://nkcrowe.github.io">← Back to portfolio</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
