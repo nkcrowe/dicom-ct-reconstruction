@@ -283,35 +283,36 @@
 
   .code-body {
     background: var(--paper-code);
-    padding: 1.4rem 1.4rem 1.4rem 0;
+    padding: 1.4rem 0;
     overflow-x: auto;
   }
 
-  pre {
+  .code-table {
     font-family: 'DM Mono', monospace;
     font-size: 0.78rem;
     font-weight: 300;
-    line-height: 1.85;
+    line-height: 1.75;
     color: var(--syn-base);
-    margin: 0;
-    counter-reset: line;
+    border-collapse: collapse;
+    width: 100%;
   }
 
-  .line {
-    display: grid;
-    grid-template-columns: 44px 1fr;
-  }
+  .code-table tr { vertical-align: top; }
 
   .ln {
     text-align: right;
-    padding-right: 1.2rem;
+    padding: 0 1.2rem 0 1.4rem;
     color: #3a3830;
     font-size: 0.72rem;
     user-select: none;
-    padding-top: 0;
+    white-space: nowrap;
+    width: 1%;
   }
 
-  .lc { white-space: pre; }
+  .lc {
+    white-space: pre;
+    padding-right: 1.4rem;
+  }
 
   /* syntax token classes */
   .k  { color: var(--syn-keyword); }   /* keywords: for, end, if, etc */
@@ -572,7 +573,7 @@
 
     <div class="figure-grid">
       <div class="fig-slot">
-        <img src="figures/original_dicom.png" alt="Original DICOM image">
+        <!-- To add your figure: <img src="figures/original_dicom.png" alt="Original DICOM image"> -->
         <div class="fig-placeholder">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Original DICOM image</span>
@@ -581,7 +582,7 @@
       </div>
 
       <div class="fig-slot">
-        <img src="figures/cropped.png" alt="Cropped 128x128 section">
+        <!-- <img src="figures/cropped.png" alt="Cropped 128x128 section"> -->
         <div class="fig-placeholder">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Cropped 128×128 region</span>
@@ -592,7 +593,7 @@
 
     <div class="figure-grid wide">
       <div class="fig-slot">
-        <img src="figures/sinogram.png" alt="Sinogram — 180 projections">
+        <!-- <img src="figures/sinogram.png" alt="Sinogram — 180 projections"> -->
         <div class="fig-placeholder" style="min-height: 120px;">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Sinogram (180 projections)</span>
@@ -603,7 +604,7 @@
 
     <div class="figure-grid">
       <div class="fig-slot">
-        <img src="figures/fft_assembled.png" alt="Assembled 2D Fourier transform">
+        <!-- <img src="figures/fft_assembled.png" alt="Assembled 2D Fourier transform"> -->
         <div class="fig-placeholder">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Assembled 2D FFT</span>
@@ -612,7 +613,7 @@
       </div>
 
       <div class="fig-slot">
-        <img src="figures/fft_direct.png" alt="Direct 2D FFT for validation">
+        <!-- <img src="figures/fft_direct.png" alt="Direct 2D FFT for validation"> -->
         <div class="fig-placeholder">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Direct 2D FFT (validation)</span>
@@ -622,9 +623,10 @@
     </div>
 
     <div class="figure-grid wide">
-      <div class="fig-slot">
-        <!<img src="figures/reconstruction.png" alt="Final reconstructed image">
-        <div class="fig-placeholder" style="min-height: 200px;">
+      <div class="fig-slot" id="fig6-slot">
+        <img src="figures/reconstruction.png" alt="Final reconstructed image"
+             onerror="this.style.display='none'; document.getElementById('fig6-ph').style.display='flex';">
+        <div class="fig-placeholder" id="fig6-ph" style="min-height: 200px; display: none;">
           <svg class="fig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span class="fig-placeholder-label">Final reconstructed image</span>
         </div>
@@ -652,89 +654,89 @@
         <span class="code-lang">MATLAB</span>
       </div>
       <div class="code-body">
-<pre>
-<div class="line"><span class="ln">1</span><span class="lc"><span class="fn">clear</span>, <span class="fn">clc</span>, <span class="fn">close</span> <span class="k">all</span></span></div>
-<div class="line"><span class="ln">2</span><span class="lc"></span></div>
-<div class="line"><span class="ln">3</span><span class="lc"><span class="s">%% Part 1</span></span></div>
-<div class="line"><span class="ln">4</span><span class="lc"></span></div>
-<div class="line"><span class="ln">5</span><span class="lc">dicomImage = <span class="fn">dicomread</span>(<span class="st">"image10.dcm"</span>);</span></div>
-<div class="line"><span class="ln">6</span><span class="lc"></span></div>
-<div class="line"><span class="ln">7</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">8</span><span class="lc"><span class="fn">imshow</span>(dicomImage, [])</span></div>
-<div class="line"><span class="ln">9</span><span class="lc"><span class="fn">title</span>(<span class="st">'Original DICOM Image'</span>)</span></div>
-<div class="line"><span class="ln">10</span><span class="lc"></span></div>
-<div class="line"><span class="ln">11</span><span class="lc">croppedImage = <span class="fn">imcrop</span>(dicomImage,[<span class="nm">175</span> <span class="nm">125</span> <span class="nm">127</span> <span class="nm">127</span>]); <span class="cm">% Crop 128x128 section</span></span></div>
-<div class="line"><span class="ln">12</span><span class="lc"></span></div>
-<div class="line"><span class="ln">13</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">14</span><span class="lc"><span class="fn">imshow</span>(croppedImage, [])</span></div>
-<div class="line"><span class="ln">15</span><span class="lc"><span class="fn">title</span>(<span class="st">'Cropped 128x128 Section'</span>)</span></div>
-<div class="line"><span class="ln">16</span><span class="lc"></span></div>
-<div class="line"><span class="ln">17</span><span class="lc"><span class="s">%% Part 2</span></span></div>
-<div class="line"><span class="ln">18</span><span class="lc"></span></div>
-<div class="line"><span class="ln">19</span><span class="lc">numAngles = <span class="nm">180</span>;</span></div>
-<div class="line"><span class="ln">20</span><span class="lc">projections = <span class="fn">zeros</span>(numAngles, <span class="fn">size</span>(croppedImage, <span class="nm">1</span>));</span></div>
-<div class="line"><span class="ln">21</span><span class="lc"></span></div>
-<div class="line"><span class="ln">22</span><span class="lc"><span class="k">for</span> angle = <span class="nm">1</span>:<span class="nm">180</span></span></div>
-<div class="line"><span class="ln">23</span><span class="lc">  rotatedImage = <span class="fn">imrotate</span>(croppedImage, angle, <span class="st">'bilinear'</span>, <span class="st">'crop'</span>);</span></div>
-<div class="line"><span class="ln">24</span><span class="lc">  projections(angle, :) = <span class="fn">sum</span>(rotatedImage, <span class="nm">1</span>);</span></div>
-<div class="line"><span class="ln">25</span><span class="lc"><span class="k">end</span></span></div>
-<div class="line"><span class="ln">26</span><span class="lc"></span></div>
-<div class="line"><span class="ln">27</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">28</span><span class="lc"><span class="fn">imagesc</span>(projections)</span></div>
-<div class="line"><span class="ln">29</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
-<div class="line"><span class="ln">30</span><span class="lc"><span class="fn">xlabel</span>(<span class="st">'Detector Pixels'</span>)</span></div>
-<div class="line"><span class="ln">31</span><span class="lc"><span class="fn">ylabel</span>(<span class="st">'Projection Angle (degrees)'</span>)</span></div>
-<div class="line"><span class="ln">32</span><span class="lc"><span class="fn">title</span>(<span class="st">'180 1D Projections (Sinogram)'</span>)</span></div>
-<div class="line"><span class="ln">33</span><span class="lc"></span></div>
-<div class="line"><span class="ln">34</span><span class="lc"><span class="s">%% Part 3</span></span></div>
-<div class="line"><span class="ln">35</span><span class="lc"></span></div>
-<div class="line"><span class="ln">36</span><span class="lc">pad = <span class="fn">padarray</span>(croppedImage,[<span class="nm">50</span> <span class="nm">50</span>],<span class="st">'both'</span>);</span></div>
-<div class="line"><span class="ln">37</span><span class="lc"></span></div>
-<div class="line"><span class="ln">38</span><span class="lc"><span class="k">for</span> i = <span class="nm">1</span>:<span class="nm">180</span></span></div>
-<div class="line"><span class="ln">39</span><span class="lc">  rotate = <span class="fn">imrotate</span>(pad,(i-<span class="nm">1</span>),<span class="st">'bilinear'</span>,<span class="st">'crop'</span>);</span></div>
-<div class="line"><span class="ln">40</span><span class="lc">  sinogram(:,i) = <span class="fn">sum</span>(rotate);</span></div>
-<div class="line"><span class="ln">41</span><span class="lc"><span class="k">end</span></span></div>
-<div class="line"><span class="ln">42</span><span class="lc"></span></div>
-<div class="line"><span class="ln">43</span><span class="lc">dfft = <span class="fn">fftshift</span>(<span class="fn">fft</span>(<span class="fn">fftshift</span>(sinogram)));</span></div>
-<div class="line"><span class="ln">44</span><span class="lc"></span></div>
-<div class="line"><span class="ln">45</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">46</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(dfft)),[])</span></div>
-<div class="line"><span class="ln">47</span><span class="lc"></span></div>
-<div class="line"><span class="ln">48</span><span class="lc"><span class="s">%% Part 4 and 5</span></span></div>
-<div class="line"><span class="ln">49</span><span class="lc"></span></div>
-<div class="line"><span class="ln">50</span><span class="lc">theta = <span class="fn">repmat</span>((<span class="nm">0</span>:<span class="nm">1</span>:(<span class="nm">180</span>-<span class="nm">1</span>))*pi/<span class="nm">180</span>, <span class="fn">length</span>(dfft), <span class="nm">1</span>);</span></div>
-<div class="line"><span class="ln">51</span><span class="lc">bound = (<span class="fn">length</span>(dfft)-<span class="nm">1</span>)/<span class="nm">2</span>;</span></div>
-<div class="line"><span class="ln">52</span><span class="lc">rho   = <span class="fn">repmat</span>((-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound))', <span class="nm">1</span>, <span class="nm">180</span>);</span></div>
-<div class="line"><span class="ln">53</span><span class="lc"></span></div>
-<div class="line"><span class="ln">54</span><span class="lc">[x, y] = <span class="fn">pol2cart</span>(theta, rho);</span></div>
-<div class="line"><span class="ln">55</span><span class="lc">[XI, YI] = <span class="fn">meshgrid</span>(-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound));</span></div>
-<div class="line"><span class="ln">56</span><span class="lc"></span></div>
-<div class="line"><span class="ln">57</span><span class="lc">assembled_dfft = <span class="fn">griddata</span>(x, y, dfft, XI, YI, <span class="st">'linear'</span>);</span></div>
-<div class="line"><span class="ln">58</span><span class="lc">assembled_dfft(<span class="fn">isnan</span>(assembled_dfft)) = <span class="nm">0</span>;</span></div>
-<div class="line"><span class="ln">59</span><span class="lc"></span></div>
-<div class="line"><span class="ln">60</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">61</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(assembled_dfft)),[])</span></div>
-<div class="line"><span class="ln">62</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
-<div class="line"><span class="ln">63</span><span class="lc"><span class="fn">title</span>(<span class="st">'Interpolated 2D Fourier Transform'</span>)</span></div>
-<div class="line"><span class="ln">64</span><span class="lc"></span></div>
-<div class="line"><span class="ln">65</span><span class="lc"><span class="s">%% Part 6</span></span></div>
-<div class="line"><span class="ln">66</span><span class="lc"></span></div>
-<div class="line"><span class="ln">67</span><span class="lc">direct = <span class="fn">fft2</span>(croppedImage);</span></div>
-<div class="line"><span class="ln">68</span><span class="lc"></span></div>
-<div class="line"><span class="ln">69</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">70</span><span class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(<span class="fn">fftshift</span>(direct))),[])</span></div>
-<div class="line"><span class="ln">71</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
-<div class="line"><span class="ln">72</span><span class="lc"><span class="fn">title</span>(<span class="st">'2D Fourier Transform (Magnitude)'</span>)</span></div>
-<div class="line"><span class="ln">73</span><span class="lc"></span></div>
-<div class="line"><span class="ln">74</span><span class="lc"><span class="s">%% Part 8</span></span></div>
-<div class="line"><span class="ln">75</span><span class="lc"></span></div>
-<div class="line"><span class="ln">76</span><span class="lc">inverseImage = <span class="fn">abs</span>(<span class="fn">fftshift</span>(<span class="fn">ifft2</span>(<span class="fn">fftshift</span>(assembled_dfft))))' ;</span></div>
-<div class="line"><span class="ln">77</span><span class="lc"></span></div>
-<div class="line"><span class="ln">78</span><span class="lc"><span class="fn">figure</span></span></div>
-<div class="line"><span class="ln">79</span><span class="lc"><span class="fn">imagesc</span>(inverseImage)</span></div>
-<div class="line"><span class="ln">80</span><span class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</span></div>
-<div class="line"><span class="ln">81</span><span class="lc"><span class="fn">title</span>(<span class="st">'Reconstructed Image from Inverse 2D Fourier Transform'</span>)</span></div>
-</pre>
+        <table class="code-table"><tbody>
+<tr><td class="ln">1</td><td class="lc"><span class="fn">clear</span>, <span class="fn">clc</span>, <span class="fn">close</span> <span class="k">all</span></td></tr>
+<tr><td class="ln">2</td><td class="lc"> </td></tr>
+<tr><td class="ln">3</td><td class="lc"><span class="s">%% Part 1</span></td></tr>
+<tr><td class="ln">4</td><td class="lc"> </td></tr>
+<tr><td class="ln">5</td><td class="lc">dicomImage = <span class="fn">dicomread</span>(<span class="st">"image10.dcm"</span>);</td></tr>
+<tr><td class="ln">6</td><td class="lc"> </td></tr>
+<tr><td class="ln">7</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">8</td><td class="lc"><span class="fn">imshow</span>(dicomImage, [])</td></tr>
+<tr><td class="ln">9</td><td class="lc"><span class="fn">title</span>(<span class="st">'Original DICOM Image'</span>)</td></tr>
+<tr><td class="ln">10</td><td class="lc"> </td></tr>
+<tr><td class="ln">11</td><td class="lc">croppedImage = <span class="fn">imcrop</span>(dicomImage,[<span class="nm">175</span> <span class="nm">125</span> <span class="nm">127</span> <span class="nm">127</span>]); <span class="cm">% Crop 128x128 section</span></td></tr>
+<tr><td class="ln">12</td><td class="lc"> </td></tr>
+<tr><td class="ln">13</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">14</td><td class="lc"><span class="fn">imshow</span>(croppedImage, [])</td></tr>
+<tr><td class="ln">15</td><td class="lc"><span class="fn">title</span>(<span class="st">'Cropped 128x128 Section'</span>)</td></tr>
+<tr><td class="ln">16</td><td class="lc"> </td></tr>
+<tr><td class="ln">17</td><td class="lc"><span class="s">%% Part 2</span></td></tr>
+<tr><td class="ln">18</td><td class="lc"> </td></tr>
+<tr><td class="ln">19</td><td class="lc">numAngles = <span class="nm">180</span>;</td></tr>
+<tr><td class="ln">20</td><td class="lc">projections = <span class="fn">zeros</span>(numAngles, <span class="fn">size</span>(croppedImage, <span class="nm">1</span>));</td></tr>
+<tr><td class="ln">21</td><td class="lc"> </td></tr>
+<tr><td class="ln">22</td><td class="lc"><span class="k">for</span> angle = <span class="nm">1</span>:<span class="nm">180</span></td></tr>
+<tr><td class="ln">23</td><td class="lc">  rotatedImage = <span class="fn">imrotate</span>(croppedImage, angle, <span class="st">'bilinear'</span>, <span class="st">'crop'</span>);</td></tr>
+<tr><td class="ln">24</td><td class="lc">  projections(angle, :) = <span class="fn">sum</span>(rotatedImage, <span class="nm">1</span>);</td></tr>
+<tr><td class="ln">25</td><td class="lc"><span class="k">end</span></td></tr>
+<tr><td class="ln">26</td><td class="lc"> </td></tr>
+<tr><td class="ln">27</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">28</td><td class="lc"><span class="fn">imagesc</span>(projections)</td></tr>
+<tr><td class="ln">29</td><td class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</td></tr>
+<tr><td class="ln">30</td><td class="lc"><span class="fn">xlabel</span>(<span class="st">'Detector Pixels'</span>)</td></tr>
+<tr><td class="ln">31</td><td class="lc"><span class="fn">ylabel</span>(<span class="st">'Projection Angle (degrees)'</span>)</td></tr>
+<tr><td class="ln">32</td><td class="lc"><span class="fn">title</span>(<span class="st">'180 1D Projections (Sinogram)'</span>)</td></tr>
+<tr><td class="ln">33</td><td class="lc"> </td></tr>
+<tr><td class="ln">34</td><td class="lc"><span class="s">%% Part 3</span></td></tr>
+<tr><td class="ln">35</td><td class="lc"> </td></tr>
+<tr><td class="ln">36</td><td class="lc">pad = <span class="fn">padarray</span>(croppedImage,[<span class="nm">50</span> <span class="nm">50</span>],<span class="st">'both'</span>);</td></tr>
+<tr><td class="ln">37</td><td class="lc"> </td></tr>
+<tr><td class="ln">38</td><td class="lc"><span class="k">for</span> i = <span class="nm">1</span>:<span class="nm">180</span></td></tr>
+<tr><td class="ln">39</td><td class="lc">  rotate = <span class="fn">imrotate</span>(pad,(i-<span class="nm">1</span>),<span class="st">'bilinear'</span>,<span class="st">'crop'</span>);</td></tr>
+<tr><td class="ln">40</td><td class="lc">  sinogram(:,i) = <span class="fn">sum</span>(rotate);</td></tr>
+<tr><td class="ln">41</td><td class="lc"><span class="k">end</span></td></tr>
+<tr><td class="ln">42</td><td class="lc"> </td></tr>
+<tr><td class="ln">43</td><td class="lc">dfft = <span class="fn">fftshift</span>(<span class="fn">fft</span>(<span class="fn">fftshift</span>(sinogram)));</td></tr>
+<tr><td class="ln">44</td><td class="lc"> </td></tr>
+<tr><td class="ln">45</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">46</td><td class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(dfft)),[])</td></tr>
+<tr><td class="ln">47</td><td class="lc"> </td></tr>
+<tr><td class="ln">48</td><td class="lc"><span class="s">%% Part 4 and 5</span></td></tr>
+<tr><td class="ln">49</td><td class="lc"> </td></tr>
+<tr><td class="ln">50</td><td class="lc">theta = <span class="fn">repmat</span>((<span class="nm">0</span>:<span class="nm">1</span>:(<span class="nm">180</span>-<span class="nm">1</span>))*pi/<span class="nm">180</span>, <span class="fn">length</span>(dfft), <span class="nm">1</span>);</td></tr>
+<tr><td class="ln">51</td><td class="lc">bound = (<span class="fn">length</span>(dfft)-<span class="nm">1</span>)/<span class="nm">2</span>;</td></tr>
+<tr><td class="ln">52</td><td class="lc">rho   = <span class="fn">repmat</span>((-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound))', <span class="nm">1</span>, <span class="nm">180</span>);</td></tr>
+<tr><td class="ln">53</td><td class="lc"> </td></tr>
+<tr><td class="ln">54</td><td class="lc">[x, y] = <span class="fn">pol2cart</span>(theta, rho);</td></tr>
+<tr><td class="ln">55</td><td class="lc">[XI, YI] = <span class="fn">meshgrid</span>(-<span class="fn">ceil</span>(bound):<span class="fn">floor</span>(bound));</td></tr>
+<tr><td class="ln">56</td><td class="lc"> </td></tr>
+<tr><td class="ln">57</td><td class="lc">assembled_dfft = <span class="fn">griddata</span>(x, y, dfft, XI, YI, <span class="st">'linear'</span>);</td></tr>
+<tr><td class="ln">58</td><td class="lc">assembled_dfft(<span class="fn">isnan</span>(assembled_dfft)) = <span class="nm">0</span>;</td></tr>
+<tr><td class="ln">59</td><td class="lc"> </td></tr>
+<tr><td class="ln">60</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">61</td><td class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(assembled_dfft)),[])</td></tr>
+<tr><td class="ln">62</td><td class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</td></tr>
+<tr><td class="ln">63</td><td class="lc"><span class="fn">title</span>(<span class="st">'Interpolated 2D Fourier Transform'</span>)</td></tr>
+<tr><td class="ln">64</td><td class="lc"> </td></tr>
+<tr><td class="ln">65</td><td class="lc"><span class="s">%% Part 6</span></td></tr>
+<tr><td class="ln">66</td><td class="lc"> </td></tr>
+<tr><td class="ln">67</td><td class="lc">direct = <span class="fn">fft2</span>(croppedImage);</td></tr>
+<tr><td class="ln">68</td><td class="lc"> </td></tr>
+<tr><td class="ln">69</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">70</td><td class="lc"><span class="fn">imshow</span>(<span class="fn">log</span>(<span class="fn">abs</span>(<span class="fn">fftshift</span>(direct))),[])</td></tr>
+<tr><td class="ln">71</td><td class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</td></tr>
+<tr><td class="ln">72</td><td class="lc"><span class="fn">title</span>(<span class="st">'2D Fourier Transform (Magnitude)'</span>)</td></tr>
+<tr><td class="ln">73</td><td class="lc"> </td></tr>
+<tr><td class="ln">74</td><td class="lc"><span class="s">%% Part 8</span></td></tr>
+<tr><td class="ln">75</td><td class="lc"> </td></tr>
+<tr><td class="ln">76</td><td class="lc">inverseImage = <span class="fn">abs</span>(<span class="fn">fftshift</span>(<span class="fn">ifft2</span>(<span class="fn">fftshift</span>(assembled_dfft))))' ;</td></tr>
+<tr><td class="ln">77</td><td class="lc"> </td></tr>
+<tr><td class="ln">78</td><td class="lc"><span class="fn">figure</span></td></tr>
+<tr><td class="ln">79</td><td class="lc"><span class="fn">imagesc</span>(inverseImage)</td></tr>
+<tr><td class="ln">80</td><td class="lc"><span class="fn">colormap</span>(<span class="st">'gray'</span>)</td></tr>
+<tr><td class="ln">81</td><td class="lc"><span class="fn">title</span>(<span class="st">'Reconstructed Image from Inverse 2D Fourier Transform'</span>)</td></tr>
+        </tbody></table>
       </div>
     </div>
   </section>
